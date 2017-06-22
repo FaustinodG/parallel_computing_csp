@@ -1,39 +1,68 @@
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Created by Faustino on 22-6-2017.
  */
 public class Producer {
 
-    public static void main(String[] args) {
-        try {
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616?trace=true");
-            Connection connection = connectionFactory.createConnection();
-            connection.start();
+    public static void main(String[] args) throws JMSException {
 
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-            Destination destination = session.createQueue("QueueFromJava1");
-            // Create a MessageProducer from the Session to the Topic or Queue
-            MessageProducer producer = session.createProducer(destination);
-            producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+        ArrayList<Student> students = generateStudents(1000);
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616?trace=true");
+        Connection connection = connectionFactory.createConnection();
+        connection.start();
 
-            // Create a messages
-            String text = "Hello world! From: " + Thread.currentThread().getName() + " : 1337";
-            TextMessage message = session.createTextMessage(text);
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-            // Tell the producer to send the message
-            System.out.println("Sent message: "+ message.hashCode() + " : " + Thread.currentThread().getName());
-            producer.send(message);
+        Destination destination = session.createQueue("QueueFromJava1");
+        
+        MessageProducer producer = session.createProducer(destination);
+        producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 
-            // Clean up
-            session.close();
-            connection.close();
+        ObjectMessage message = session.createObjectMessage();
 
-        } catch (JMSException e) {
-            e.printStackTrace();
+        message.setObject(students);
+        producer.send(message);
+
+        System.out.println("Sent:");
+        printStudents(students);
+
+        session.close();
+        connection.close();
+
+
+    }
+
+    private static ArrayList<Student> generateStudents(int count) {
+        ArrayList<Student> studentList = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Student student = new Student(i, generateRandomGrade());
+            studentList.add(student);
         }
+        return studentList;
+    }
+
+    private static void printStudents(List<Student> students) {
+        for (Student student : students) {
+            System.out.println(student.getStudentNumber() + " - " + student.getGrade());
+        }
+        System.out.println("---");
+    }
+
+    private static double generateRandomGrade() {
+        int result = 0;
+        double grade = 0;
+        Random r = new Random();
+        int low = 10;
+        int high = 101;
+        result = r.nextInt(high - low) + low;
+        grade = (double) result / 10;
+        return grade;
     }
 }
