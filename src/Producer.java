@@ -12,16 +12,15 @@ public class Producer {
 
     public static void main(String[] args) throws JMSException {
 
-
         ArrayList<Student> students = generateStudents(1000);
-        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616?trace=true");
+        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(Constants.ACTIVEMQ_URL);
         Connection connection = connectionFactory.createConnection();
         connection.start();
 
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-        Destination destination = session.createQueue("QueueFromJava1");
-        
+        Destination destination = session.createQueue(Constants.PRODUCER_QUEUE);
+
         MessageProducer producer = session.createProducer(destination);
         producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 
